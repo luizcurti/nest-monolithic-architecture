@@ -74,7 +74,8 @@ describe('Application (e2e)', () => {
   });
 
   afterAll(async () => {
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Allow time for all async operations to complete
+    await new Promise(resolve => setTimeout(resolve, 500));
   });
 
   describe('Users API (REST)', () => {

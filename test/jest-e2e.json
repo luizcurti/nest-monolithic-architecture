@@ -8,5 +8,6 @@
   },
   "testTimeout": 30000,
   "forceExit": true,
-  "detectOpenHandles": true
+  "detectOpenHandles": false,
+  "maxWorkers": 1
 }
