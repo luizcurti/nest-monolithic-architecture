@@ -60,7 +60,7 @@ jobs:
         cache: 'npm'
 
     - name: Install dependencies
-      run: npm ci
+      run: npm ci --legacy-peer-deps
 
     # TESTS
     - name: Run ESLint
@@ -69,11 +69,11 @@ jobs:
     - name: TypeScript Check
       run: npx tsc --noEmit
 
-    - name: Run unit tests
-      run: npm run test -- --passWithNoTests
+    - name: Run unit tests with coverage
+      run: npm run test:cov -- --passWithNoTests
 
-    - name: Run e2e tests
-      run: npm run test:e2e
+    - name: Run e2e tests with coverage
+      run: npm run test:e2e:cov
       env:
         DATABASE_DATASOURCE: typeorm
         REDIS_HOST: localhost
@@ -84,12 +84,6 @@ jobs:
         TYPEORM_PASSWORD: qso_password
         TYPEORM_DATABASE: qso_example
         MONGODB_URL: mongodb://localhost:27017/test
-
-    - name: Run test coverage (unit tests)
-      run: npm run test:cov -- --passWithNoTests
-
-    - name: Run e2e test coverage  
-      run: npm run test:e2e:cov
 
     # SECURITY
     - name: Security audit - Overview

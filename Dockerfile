@@ -12,7 +12,7 @@ WORKDIR /usr/app
 
 # Copy package files and install dependencies
 COPY package*.json ./
-RUN npm ci && npm cache clean --force
+RUN npm ci --legacy-peer-deps && npm cache clean --force
 
 # Copy source code
 COPY . .
