@@ -13,7 +13,6 @@ describe('User Model', () => {
     user.name = 'John Doe';
     user.email = 'john.doe@example.com';
 
-    
     expect(user.id).toBe(1);
     expect(user.name).toBe('John Doe');
     expect(user.email).toBe('john.doe@example.com');
@@ -22,7 +21,6 @@ describe('User Model', () => {
   it('should allow modification of properties', () => {
     
     const user = new User();
-    
 
     user.id = 1;
     user.name = 'Initial Name';
@@ -30,7 +28,6 @@ describe('User Model', () => {
 
     user.name = 'Updated Name';
     user.email = 'updated@example.com';
-
     
     expect(user.id).toBe(1);
     expect(user.name).toBe('Updated Name');
@@ -44,7 +41,6 @@ describe('User Model', () => {
     user.name = 'Database User';
     user.email = 'db@example.com';
 
-    
     expect(user).toBeInstanceOf(User);
     expect(typeof user.id).toBe('number');
     expect(typeof user.name).toBe('string');
@@ -74,7 +70,6 @@ describe('User Model', () => {
     
     const user = new User();
 
- - Should be able to access properties directly
     expect(() => {
       user.id = 1;
       user.name = 'Test';
@@ -93,11 +88,9 @@ describe('User Model', () => {
       name: 'Assigned User',
       email: 'assigned@example.com',
     };
-
-
+    
     const user = Object.assign(new User(), userData);
 
-    
     expect(user.id).toBe(userData.id);
     expect(user.name).toBe(userData.name);
     expect(user.email).toBe(userData.email);

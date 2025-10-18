@@ -45,7 +45,6 @@ describe('UserCreatedEvent', () => {
   it('should be instance of UserCreatedEvent', () => {
 
     const event = new UserCreatedEvent('Event User', 'event@example.com');
-
     
     expect(event).toBeInstanceOf(UserCreatedEvent);
   });
@@ -64,10 +63,8 @@ describe('UserCreatedEvent', () => {
     const name = 'João São Paulo';
     const email = 'test+user@example-domain.com';
 
-
     const event = new UserCreatedEvent(name, email);
 
-    
     expect(event.name).toBe(name);
     expect(event.email).toBe(email);
   });
@@ -82,7 +79,6 @@ describe('UserCreatedEvent', () => {
 
     const event = new UserCreatedEvent(userData.name, userData.email);
 
-     - Should be suitable for event emission
     expect(typeof event.name).toBe('string');
     expect(typeof event.email).toBe('string');
     expect(event.name).toBeTruthy();

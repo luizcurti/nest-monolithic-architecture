@@ -62,11 +62,7 @@ describe('UserResolver', () => {
       
       mockUsersService.findAll.mockResolvedValue([]);
       const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-
-  
       await resolver.findAll();
-
-       - Test specific console.info call with function name
       expect(consoleSpy).toHaveBeenCalledWith('Called: ', 'findAll');
       expect(consoleSpy).toHaveBeenCalledTimes(1);
 
@@ -133,7 +129,7 @@ describe('UserResolver', () => {
   
       await resolver.create(createUserDto);
 
-       - Test specific console.info call with DTO object
+      // Test specific console.info call with DTO object
       expect(consoleSpy).toHaveBeenCalledWith(createUserDto);
       expect(consoleSpy).toHaveBeenCalledTimes(1);
 
