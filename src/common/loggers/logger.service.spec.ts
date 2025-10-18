@@ -19,10 +19,8 @@ describe('LoggerService', () => {
     it('should set and get idempotency key', () => {
       
       const key = 'test-key-123';
-
   
       service.idempotencyKey = key;
-
       
       expect(service.idempotencyKey).toBe(key);
     });
@@ -32,10 +30,8 @@ describe('LoggerService', () => {
     it('should set and get context name', () => {
       
       const contextName = 'TestContext';
-
   
       service.contextName = contextName;
-
       
       expect(service.contextName).toBe(contextName);
     });
@@ -53,10 +49,8 @@ describe('LoggerService', () => {
       const logSpy = jest.spyOn((service as any).logger, 'log').mockImplementation();
       service.contextName = 'TestContext';
       service.idempotencyKey = 'test-key';
-
   
       service.info(message);
-
       
       expect(logSpy).toHaveBeenCalledWith({
         level: LogLevel.INFO,
@@ -76,10 +70,8 @@ describe('LoggerService', () => {
       const logSpy = jest.spyOn((service as any).logger, 'log').mockImplementation();
       service.contextName = 'TestContext';
       service.idempotencyKey = 'test-key';
-
   
       service.warn(message);
-
       
       expect(logSpy).toHaveBeenCalledWith({
         level: LogLevel.WARN,
@@ -100,10 +92,8 @@ describe('LoggerService', () => {
       const logSpy = jest.spyOn((service as any).logger, 'log').mockImplementation();
       service.contextName = 'TestContext';
       service.idempotencyKey = 'test-key';
-
   
       service.error(message, stackTrace);
-
       
       expect(logSpy).toHaveBeenCalledWith({
         level: LogLevel.ERROR,
@@ -121,10 +111,8 @@ describe('LoggerService', () => {
       const message = 'Test error message';
       const logSpy = jest.spyOn((service as any).logger, 'log').mockImplementation();
       service.contextName = 'TestContext';
-
   
       service.error(message);
-
       
       expect(logSpy).toHaveBeenCalledWith({
         level: LogLevel.ERROR,
@@ -150,7 +138,6 @@ describe('LoggerService', () => {
     it('should create transport with correct configuration', () => {
   
       const transport = (service as any).logTransportConsole();
-
       
       expect(transport).toBeDefined();
       expect(transport.handleExceptions).toBe(true);
@@ -168,7 +155,6 @@ describe('LoggerService', () => {
       };
 
       const formatted = transport.format.transform(mockInfo);
-
       
       expect(formatted).toBeDefined();
     });
@@ -183,7 +169,6 @@ describe('LoggerService', () => {
       };
 
       const formatted = transport.format.transform(mockInfo);
-
       
       expect(formatted).toBeDefined();
     });
@@ -199,7 +184,6 @@ describe('LoggerService', () => {
       };
 
       const formatted = transport.format.transform(mockInfo);
-
       
       expect(formatted).toBeDefined();
     });
@@ -214,7 +198,6 @@ describe('LoggerService', () => {
       };
 
       const formatted = transport.format.transform(mockInfo);
-
       
       expect(formatted).toBeDefined();
     });
@@ -228,7 +211,6 @@ describe('LoggerService', () => {
       };
 
       const formatted = transport.format.transform(mockInfo);
-
       
       expect(formatted).toBeDefined();
     });
@@ -244,7 +226,6 @@ describe('LoggerService', () => {
       };
 
       const formatted = transport.format.transform(mockInfo);
-
       
       expect(formatted).toBeDefined();
     });
@@ -260,7 +241,6 @@ describe('LoggerService', () => {
       };
 
       const formatted = transport.format.transform(mockInfo);
-
       
       expect(formatted).toBeDefined();
     });

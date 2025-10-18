@@ -58,7 +58,6 @@ describe('User Model', () => {
     user2.id = 2;
     user2.name = 'User 2';
     user2.email = 'user2@example.com';
-
     
     expect(user1).not.toBe(user2);
     expect(user1.id).not.toBe(user2.id);

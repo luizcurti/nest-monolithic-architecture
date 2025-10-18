@@ -3,6 +3,14 @@ import { UsersController } from './users.controller';
 import { UsersService } from '../domain/users.service';
 import { CreateUserDto } from './dtos/create-users.dto';
 
+const mockLogger = {
+  log: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  verbose: jest.fn(),
+};
+
 describe('UsersController', () => {
   let controller: UsersController;
   let mockUsersService: jest.Mocked<UsersService>;
@@ -28,7 +36,9 @@ describe('UsersController', () => {
           useValue: mockUsersService,
         },
       ],
-    }).compile();
+    })
+    .setLogger(mockLogger)
+    .compile();
 
     controller = module.get<UsersController>(UsersController);
   });
@@ -50,10 +60,8 @@ describe('UsersController', () => {
     it('should create a user successfully', async () => {
       
       mockUsersService.create.mockResolvedValue(mockUser);
-
   
       const result = await controller.create(createUserDto);
-
       
       expect(mockUsersService.create).toHaveBeenCalledWith(createUserDto);
       expect(result).toEqual(mockUser);
@@ -63,7 +71,6 @@ describe('UsersController', () => {
       
       const error = new Error('Service error');
       mockUsersService.create.mockRejectedValue(error);
-
   
       await expect(controller.create(createUserDto)).rejects.toThrow('Service error');
     });
@@ -74,10 +81,8 @@ describe('UsersController', () => {
       
       const mockUsers = [mockUser, { ...mockUser, id: 2, name: 'User 2' }];
       mockUsersService.findAll.mockResolvedValue(mockUsers);
-
   
       const result = await controller.findAll();
-
       
       expect(mockUsersService.findAll).toHaveBeenCalled();
       expect(result).toEqual(mockUsers);
@@ -86,10 +91,8 @@ describe('UsersController', () => {
     it('should return empty array when no users exist', async () => {
       
       mockUsersService.findAll.mockResolvedValue([]);
-
   
       const result = await controller.findAll();
-
       
       expect(mockUsersService.findAll).toHaveBeenCalled();
       expect(result).toEqual([]);
@@ -99,7 +102,6 @@ describe('UsersController', () => {
       
       const error = new Error('Service error');
       mockUsersService.findAll.mockRejectedValue(error);
-
   
       await expect(controller.findAll()).rejects.toThrow('Service error');
     });

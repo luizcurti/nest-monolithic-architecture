@@ -2,6 +2,14 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { CreditController } from './credit-engine.controller';
 import { CreditService } from '../domain/credit-engine.service';
 
+const mockLogger = {
+  log: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  verbose: jest.fn(),
+};
+
 describe('CreditController', () => {
   let controller: CreditController;
   let mockCreditService: jest.Mocked<CreditService>;
@@ -19,7 +27,9 @@ describe('CreditController', () => {
           useValue: mockCreditService,
         },
       ],
-    }).compile();
+    })
+    .setLogger(mockLogger)
+    .compile();
 
     controller = module.get<CreditController>(CreditController);
   });
@@ -37,10 +47,8 @@ describe('CreditController', () => {
       
       const expectedMessage = 'Hello Credit Engine';
       mockCreditService.findAll.mockReturnValue(expectedMessage);
-
   
       const result = controller.findAll();
-
       
       expect(mockCreditService.findAll).toHaveBeenCalled();
       expect(result).toBe(expectedMessage);
@@ -50,10 +58,8 @@ describe('CreditController', () => {
       
       const customMessage = 'Custom Credit Message';
       mockCreditService.findAll.mockReturnValue(customMessage);
-
   
       const result = controller.findAll();
-
       
       expect(mockCreditService.findAll).toHaveBeenCalled();
       expect(result).toBe(customMessage);

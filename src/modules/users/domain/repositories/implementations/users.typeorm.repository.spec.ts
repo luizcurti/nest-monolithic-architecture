@@ -3,6 +3,14 @@ import { Repository } from 'typeorm';
 import { UsersTypeOrmRepository } from './users.typeorm.repository';
 import { User } from '../../models/users.model';
 
+const mockLogger = {
+  log: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  verbose: jest.fn(),
+};
+
 describe('UsersTypeOrmRepository', () => {
   let repository: UsersTypeOrmRepository;
   let mockTypeOrmRepository: jest.Mocked<Repository<User>>;
@@ -28,7 +36,9 @@ describe('UsersTypeOrmRepository', () => {
           useFactory: () => new UsersTypeOrmRepository(mockTypeOrmRepository),
         },
       ],
-    }).compile();
+    })
+    .setLogger(mockLogger)
+    .compile();
 
     repository = module.get<UsersTypeOrmRepository>(UsersTypeOrmRepository);
   });
@@ -52,10 +62,8 @@ describe('UsersTypeOrmRepository', () => {
       
       const insertResult = { identifiers: [{ id: 1 }], generatedMaps: [], raw: [] };
       mockTypeOrmRepository.insert.mockResolvedValue(insertResult as any);
-
   
       const result = await repository.create(testUser);
-
       
       expect(mockTypeOrmRepository.insert).toHaveBeenCalledWith(testUser);
       expect(result).toEqual(testUser);
@@ -65,7 +73,6 @@ describe('UsersTypeOrmRepository', () => {
       
       const error = new Error('Database connection failed');
       mockTypeOrmRepository.insert.mockRejectedValue(error);
-
   
       await expect(repository.create(testUser)).rejects.toThrow('Database connection failed');
     });
@@ -74,10 +81,8 @@ describe('UsersTypeOrmRepository', () => {
       
       const insertResult = { identifiers: [{ id: 1 }], generatedMaps: [], raw: [] };
       mockTypeOrmRepository.insert.mockResolvedValue(insertResult as any);
-
   
       await repository.create(testUser);
-
       
       expect(mockTypeOrmRepository.insert).toHaveBeenCalledWith(testUser);
     });
@@ -88,10 +93,8 @@ describe('UsersTypeOrmRepository', () => {
       
       const mockUsers = [mockUser, { ...mockUser, id: 2, name: 'User 2' }];
       mockTypeOrmRepository.find.mockResolvedValue(mockUsers);
-
   
       const result = await repository.findAll();
-
       
       expect(mockTypeOrmRepository.find).toHaveBeenCalled();
       expect(result).toEqual(mockUsers);
@@ -100,10 +103,8 @@ describe('UsersTypeOrmRepository', () => {
     it('should return empty array when no users exist', async () => {
       
       mockTypeOrmRepository.find.mockResolvedValue([]);
-
   
       const result = await repository.findAll();
-
       
       expect(mockTypeOrmRepository.find).toHaveBeenCalled();
       expect(result).toEqual([]);
@@ -113,7 +114,6 @@ describe('UsersTypeOrmRepository', () => {
       
       const error = new Error('Database query failed');
       mockTypeOrmRepository.find.mockRejectedValue(error);
-
   
       await expect(repository.findAll()).rejects.toThrow('Database query failed');
     });

@@ -11,9 +11,7 @@ describe('UserCreatedEvent', () => {
     const name = 'John Doe';
     const email = 'john.doe@example.com';
 
-
     const event = new UserCreatedEvent(name, email);
-
     
     expect(event.name).toBe(name);
     expect(event.email).toBe(email);
@@ -22,7 +20,6 @@ describe('UserCreatedEvent', () => {
   it('should have readonly properties', () => {
     
     const event = new UserCreatedEvent('Test User', 'test@example.com');
-
 
     expect(event.name).toBe('Test User');
     expect(event.email).toBe('test@example.com');
@@ -35,7 +32,6 @@ describe('UserCreatedEvent', () => {
 
     const event1 = new UserCreatedEvent('User 1', 'user1@example.com');
     const event2 = new UserCreatedEvent('User 2', 'user2@example.com');
-
     
     expect(event1).not.toBe(event2);
     expect(event1.name).not.toBe(event2.name);
@@ -52,7 +48,6 @@ describe('UserCreatedEvent', () => {
   it('should handle empty strings', () => {
 
     const event = new UserCreatedEvent('', '');
-
     
     expect(event.name).toBe('');
     expect(event.email).toBe('');
@@ -75,7 +70,6 @@ describe('UserCreatedEvent', () => {
       name: 'Event Test User',
       email: 'eventtest@example.com',
     };
-
 
     const event = new UserCreatedEvent(userData.name, userData.email);
 

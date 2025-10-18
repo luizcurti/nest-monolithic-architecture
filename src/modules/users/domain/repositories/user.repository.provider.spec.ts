@@ -8,6 +8,14 @@ import { USERS_REPOSITORY_TOKEN } from './user.repository.interface';
 import { UsersTypeOrmRepository } from './implementations/users.typeorm.repository';
 import { UsersInMemoryRepository } from './implementations/users.in-memory.repository';
 
+const mockLogger = {
+  log: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  verbose: jest.fn(),
+};
+
 describe('UsersRepositoryProvider', () => {
   let dependenciesProvider: UsersRepoDependenciesProvider;
   let mockRepository: jest.Mocked<Repository<User>>;
@@ -26,7 +34,9 @@ describe('UsersRepositoryProvider', () => {
           useValue: mockRepository,
         },
       ],
-    }).compile();
+    })
+    .setLogger(mockLogger)
+    .compile();
 
     dependenciesProvider = module.get<UsersRepoDependenciesProvider>(UsersRepoDependenciesProvider);
   });
@@ -51,7 +61,6 @@ describe('UsersRepositoryProvider', () => {
     it('should return provider array', () => {
   
       const providers = provideUsersRepository();
-
       
       expect(providers).toHaveLength(2);
       expect((providers[0] as any)).toHaveProperty('provide', USERS_REPOSITORY_TOKEN);
@@ -63,7 +72,6 @@ describe('UsersRepositoryProvider', () => {
     it('should have correct injection dependencies', () => {
   
       const providers = provideUsersRepository();
-
       
       expect((providers[0] as any).inject).toEqual([UsersRepoDependenciesProvider]);
     });
@@ -74,12 +82,10 @@ describe('UsersRepositoryProvider', () => {
       
       process.env.DATABASE_DATASOURCE = 'typeorm';
       jest.spyOn(ConfigModule, 'envVariablesLoaded', 'get').mockReturnValue(Promise.resolve());
-
   
       const providers = provideUsersRepository();
       const factory = (providers[0] as any).useFactory;
       const result = await factory(dependenciesProvider);
-
       
       expect(result).toBeInstanceOf(UsersTypeOrmRepository);
     });
@@ -88,12 +94,10 @@ describe('UsersRepositoryProvider', () => {
       
       process.env.DATABASE_DATASOURCE = 'memory';
       jest.spyOn(ConfigModule, 'envVariablesLoaded', 'get').mockReturnValue(Promise.resolve());
-
   
       const providers = provideUsersRepository();
       const factory = (providers[0] as any).useFactory;
       const result = await factory(dependenciesProvider);
-
       
       expect(result).toBeInstanceOf(UsersInMemoryRepository);
     });
@@ -102,12 +106,10 @@ describe('UsersRepositoryProvider', () => {
       
       delete process.env.DATABASE_DATASOURCE;
       jest.spyOn(ConfigModule, 'envVariablesLoaded', 'get').mockReturnValue(Promise.resolve());
-
   
       const providers = provideUsersRepository();
       const factory = (providers[0] as any).useFactory;
       const result = await factory(dependenciesProvider);
-
       
       expect(result).toBeInstanceOf(UsersInMemoryRepository);
     });
@@ -116,12 +118,10 @@ describe('UsersRepositoryProvider', () => {
       
       process.env.DATABASE_DATASOURCE = 'unknown';
       jest.spyOn(ConfigModule, 'envVariablesLoaded', 'get').mockReturnValue(Promise.resolve());
-
   
       const providers = provideUsersRepository();
       const factory = (providers[0] as any).useFactory;
       const result = await factory(dependenciesProvider);
-
       
       expect(result).toBeInstanceOf(UsersInMemoryRepository);
     });
@@ -131,12 +131,10 @@ describe('UsersRepositoryProvider', () => {
       const envVariablesLoadedSpy = jest.spyOn(ConfigModule, 'envVariablesLoaded', 'get')
         .mockReturnValue(Promise.resolve());
       process.env.DATABASE_DATASOURCE = 'typeorm';
-
   
       const providers = provideUsersRepository();
       const factory = (providers[0] as any).useFactory;
       await factory(dependenciesProvider);
-
       
       expect(envVariablesLoadedSpy).toHaveBeenCalled();
     });

@@ -49,9 +49,7 @@ describe('AllExceptionsFilter', () => {
     const mockTimestamp = '2023-01-01T00:00:00.000Z';
     jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(mockTimestamp);
 
-
     filter.catch(httpException, mockArgumentsHost);
-
     
     expect(mockArgumentsHost.switchToHttp).toHaveBeenCalled();
     expect(mockHttpArgumentsHost.getResponse).toHaveBeenCalled();
@@ -70,9 +68,7 @@ describe('AllExceptionsFilter', () => {
     const mockTimestamp = '2023-01-01T00:00:00.000Z';
     jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(mockTimestamp);
 
-
     filter.catch(unknownException, mockArgumentsHost);
-
     
     expect(mockArgumentsHost.switchToHttp).toHaveBeenCalled();
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
@@ -89,9 +85,7 @@ describe('AllExceptionsFilter', () => {
     const mockTimestamp = '2023-01-01T00:00:00.000Z';
     jest.spyOn(Date.prototype, 'toISOString').mockReturnValue(mockTimestamp);
 
-
     filter.catch(notFoundException, mockArgumentsHost);
-
     
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
     expect(mockResponse.json).toHaveBeenCalledWith({

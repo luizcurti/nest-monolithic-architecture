@@ -6,6 +6,14 @@ import { UsersRepository, USERS_REPOSITORY_TOKEN } from './repositories/user.rep
 import { CreateUserDto } from '../http/dtos/create-users.dto';
 import { UserCreatedEvent } from '../../../common/events/user-created.event';
 
+const mockLogger = {
+  log: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  verbose: jest.fn(),
+};
+
 describe('UsersService', () => {
   let service: UsersService;
   let mockRepository: jest.Mocked<UsersRepository>;
@@ -48,7 +56,9 @@ describe('UsersService', () => {
           useValue: mockEventEmitter,
         },
       ],
-    }).compile();
+    })
+    .setLogger(mockLogger)
+    .compile();
 
     service = module.get<UsersService>(UsersService);
   });
@@ -72,10 +82,8 @@ describe('UsersService', () => {
       mockRepository.create.mockResolvedValue(mockUser);
       mockEventEmitter.emit.mockReturnValue(true);
       mockQueue.add.mockResolvedValue({} as any);
-
   
       const result = await service.create(createUserDto);
-
       
       expect(mockRepository.create).toHaveBeenCalledWith(createUserDto);
       expect(mockEventEmitter.emit).toHaveBeenCalledWith(
@@ -99,10 +107,8 @@ describe('UsersService', () => {
       mockRepository.create.mockResolvedValue(mockUser);
       mockEventEmitter.emit.mockReturnValue(true);
       mockQueue.add.mockResolvedValue({} as any);
-
   
       await service.create(createUserDto);
-
       
       const emittedEvent = mockEventEmitter.emit.mock.calls[0][1] as UserCreatedEvent;
       expect(emittedEvent.name).toBe(createUserDto.name);
@@ -113,7 +119,6 @@ describe('UsersService', () => {
       
       const error = new Error('Repository error');
       mockRepository.create.mockRejectedValue(error);
-
   
       await expect(service.create(createUserDto)).rejects.toThrow('Repository error');
       expect(mockEventEmitter.emit).not.toHaveBeenCalled();
@@ -126,10 +131,8 @@ describe('UsersService', () => {
       
       const mockUsers = [mockUser, { ...mockUser, id: 2, name: 'User 2' }];
       mockRepository.findAll.mockResolvedValue(mockUsers);
-
   
       const result = await service.findAll();
-
       
       expect(mockRepository.findAll).toHaveBeenCalled();
       expect(result).toEqual(mockUsers);
@@ -138,10 +141,8 @@ describe('UsersService', () => {
     it('should return empty array when no users exist', async () => {
       
       mockRepository.findAll.mockResolvedValue([]);
-
   
       const result = await service.findAll();
-
       
       expect(mockRepository.findAll).toHaveBeenCalled();
       expect(result).toEqual([]);
@@ -151,7 +152,6 @@ describe('UsersService', () => {
       
       const error = new Error('Database connection failed');
       mockRepository.findAll.mockRejectedValue(error);
-
   
       await expect(service.findAll()).rejects.toThrow('Database connection failed');
     });
@@ -166,13 +166,10 @@ describe('UsersService', () => {
         fn();
         return {} as any;
       }) as any;
-
   
       await service.welcomeNewUser();
-
       
       expect(consoleSpy).toHaveBeenCalledWith('USER CREATED --> EVENT EMITTER');
-
 
       consoleSpy.mockRestore();
       global.setTimeout = originalSetTimeout;

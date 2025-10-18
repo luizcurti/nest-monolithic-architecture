@@ -3,6 +3,14 @@ import { UserResolver } from './user.resolver';
 import { UsersService } from '../domain/users.service';
 import { CreateUserDto } from './dtos/create-users.dto';
 
+const mockLogger = {
+  log: jest.fn(),
+  error: jest.fn(),
+  warn: jest.fn(),
+  debug: jest.fn(),
+  verbose: jest.fn(),
+};
+
 describe('UserResolver', () => {
   let resolver: UserResolver;
   let mockUsersService: jest.Mocked<UsersService>;
@@ -27,7 +35,9 @@ describe('UserResolver', () => {
           useValue: mockUsersService,
         },
       ],
-    }).compile();
+    })
+    .setLogger(mockLogger)
+    .compile();
 
     resolver = module.get<UserResolver>(UserResolver);
   });
@@ -66,7 +76,6 @@ describe('UserResolver', () => {
       expect(consoleSpy).toHaveBeenCalledWith('Called: ', 'findAll');
       expect(consoleSpy).toHaveBeenCalledTimes(1);
 
-
       consoleSpy.mockRestore();
     });
 
@@ -74,10 +83,8 @@ describe('UserResolver', () => {
       
       mockUsersService.findAll.mockResolvedValue([]);
       jest.spyOn(console, 'info').mockImplementation();
-
   
       await resolver.findAll();
-
       
       expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
       expect(mockUsersService.findAll).toHaveBeenCalledWith();
@@ -87,15 +94,12 @@ describe('UserResolver', () => {
       
       mockUsersService.findAll.mockResolvedValue([]);
       const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-
   
       const result = await resolver.findAll();
-
       
       expect(consoleSpy).toHaveBeenCalledWith('Called: ', 'findAll');
       expect(mockUsersService.findAll).toHaveBeenCalled();
       expect(result).toEqual([]);
-
 
       consoleSpy.mockRestore();
     });
@@ -105,11 +109,9 @@ describe('UserResolver', () => {
       const error = new Error('Service error');
       mockUsersService.findAll.mockRejectedValue(error);
       const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-
   
       await expect(resolver.findAll()).rejects.toThrow('Service error');
       expect(consoleSpy).toHaveBeenCalledWith('Called: ', 'findAll');
-
 
       consoleSpy.mockRestore();
     });
@@ -125,14 +127,11 @@ describe('UserResolver', () => {
       
       mockUsersService.create.mockResolvedValue(mockUser);
       const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-
   
       await resolver.create(createUserDto);
 
-      // Test specific console.info call with DTO object
       expect(consoleSpy).toHaveBeenCalledWith(createUserDto);
       expect(consoleSpy).toHaveBeenCalledTimes(1);
-
 
       consoleSpy.mockRestore();
     });
@@ -142,9 +141,7 @@ describe('UserResolver', () => {
       mockUsersService.create.mockResolvedValue(mockUser);
       jest.spyOn(console, 'info').mockImplementation();
 
-  
       await resolver.create(createUserDto);
-
       
       expect(mockUsersService.create).toHaveBeenCalledTimes(1);
       expect(mockUsersService.create).toHaveBeenCalledWith(createUserDto);
@@ -156,10 +153,8 @@ describe('UserResolver', () => {
       mockUsersService.create.mockRejectedValue(error);
       const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
 
-  
       await expect(resolver.create(createUserDto)).rejects.toThrow('Service error');
       expect(consoleSpy).toHaveBeenCalledWith(createUserDto);
-
 
       consoleSpy.mockRestore();
     });
