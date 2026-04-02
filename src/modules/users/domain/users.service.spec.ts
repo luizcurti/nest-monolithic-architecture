@@ -30,6 +30,9 @@ describe('UsersService', () => {
     mockRepository = {
       create: jest.fn(),
       findAll: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     };
 
     mockEventEmitter = {
@@ -157,21 +160,65 @@ describe('UsersService', () => {
     });
   });
 
-  describe('welcomeNewUser', () => {
-    it('should log welcome message after delay', async () => {
-      
-      const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-      const originalSetTimeout = global.setTimeout;
-      global.setTimeout = ((fn: any) => {
-        fn();
-        return {} as any;
-      }) as any;
-  
-      await service.welcomeNewUser();
-      
-      expect(consoleSpy).toHaveBeenCalledWith('USER CREATED --> EVENT EMITTER');
+  describe('findById', () => {
+    it('should return user when found', async () => {
+      mockRepository.findById.mockResolvedValue(mockUser);
 
-      consoleSpy.mockRestore();
+      const result = await service.findById(1);
+
+      expect(mockRepository.findById).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should throw NotFoundException when user does not exist', async () => {
+      mockRepository.findById.mockResolvedValue(null);
+
+      await expect(service.findById(99)).rejects.toThrow('User with id 99 not found');
+    });
+  });
+
+  describe('update', () => {
+    it('should update and return user', async () => {
+      const updated = { ...mockUser, name: 'New Name' };
+      mockRepository.update.mockResolvedValue(updated);
+
+      const result = await service.update(1, { name: 'New Name' });
+
+      expect(mockRepository.update).toHaveBeenCalledWith(1, { name: 'New Name' });
+      expect(result).toEqual(updated);
+    });
+
+    it('should throw NotFoundException when user does not exist', async () => {
+      mockRepository.update.mockResolvedValue(null);
+
+      await expect(service.update(99, { name: 'Ghost' })).rejects.toThrow('User with id 99 not found');
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete user successfully', async () => {
+      mockRepository.findById.mockResolvedValue(mockUser);
+      mockRepository.delete.mockResolvedValue(undefined);
+
+      await expect(service.delete(1)).resolves.toBeUndefined();
+      expect(mockRepository.delete).toHaveBeenCalledWith(1);
+    });
+
+    it('should throw NotFoundException when user does not exist', async () => {
+      mockRepository.findById.mockResolvedValue(null);
+
+      await expect(service.delete(99)).rejects.toThrow('User with id 99 not found');
+      expect(mockRepository.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('welcomeNewUser', () => {
+    it('should resolve without errors', async () => {
+      const originalSetTimeout = global.setTimeout;
+      global.setTimeout = ((fn: any) => { fn(); return {} as any; }) as any;
+
+      await expect(service.welcomeNewUser(new UserCreatedEvent('Test', 'test@example.com'))).resolves.toBeUndefined();
+
       global.setTimeout = originalSetTimeout;
     });
   });

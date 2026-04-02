@@ -23,10 +23,11 @@ describe('UsersTypeOrmRepository', () => {
 
   beforeEach(async () => {
     mockTypeOrmRepository = {
-      insert: jest.fn(),
       find: jest.fn(),
-      create: jest.fn(),
       save: jest.fn(),
+      findOneBy: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     } as any;
 
     const module: TestingModule = await Test.createTestingModule({
@@ -52,70 +53,104 @@ describe('UsersTypeOrmRepository', () => {
   });
 
   describe('create', () => {
-    const testUser: User = {
-      id: 1,
-      name: 'Test User',
-      email: 'test@example.com',
-    };
+    const createData = { name: 'Test User', email: 'test@example.com' };
 
-    it('should create a user successfully', async () => {
-      
-      const insertResult = { identifiers: [{ id: 1 }], generatedMaps: [], raw: [] };
-      mockTypeOrmRepository.insert.mockResolvedValue(insertResult as any);
-  
-      const result = await repository.create(testUser);
-      
-      expect(mockTypeOrmRepository.insert).toHaveBeenCalledWith(testUser);
-      expect(result).toEqual(testUser);
+    it('should save the user and return entity with id', async () => {
+      mockTypeOrmRepository.save.mockResolvedValue(mockUser);
+
+      const result = await repository.create(createData);
+
+      expect(mockTypeOrmRepository.save).toHaveBeenCalledWith(createData);
+      expect(result).toEqual(mockUser);
     });
 
     it('should handle database errors during creation', async () => {
-      
-      const error = new Error('Database connection failed');
-      mockTypeOrmRepository.insert.mockRejectedValue(error);
-  
-      await expect(repository.create(testUser)).rejects.toThrow('Database connection failed');
-    });
+      mockTypeOrmRepository.save.mockRejectedValue(new Error('DB error'));
 
-    it('should pass correct data to TypeORM insert', async () => {
-      
-      const insertResult = { identifiers: [{ id: 1 }], generatedMaps: [], raw: [] };
-      mockTypeOrmRepository.insert.mockResolvedValue(insertResult as any);
-  
-      await repository.create(testUser);
-      
-      expect(mockTypeOrmRepository.insert).toHaveBeenCalledWith(testUser);
+      await expect(repository.create(createData)).rejects.toThrow('DB error');
     });
   });
 
   describe('findAll', () => {
     it('should return all users', async () => {
-      
       const mockUsers = [mockUser, { ...mockUser, id: 2, name: 'User 2' }];
       mockTypeOrmRepository.find.mockResolvedValue(mockUsers);
-  
+
       const result = await repository.findAll();
-      
+
       expect(mockTypeOrmRepository.find).toHaveBeenCalled();
       expect(result).toEqual(mockUsers);
     });
 
     it('should return empty array when no users exist', async () => {
-      
       mockTypeOrmRepository.find.mockResolvedValue([]);
-  
+
       const result = await repository.findAll();
-      
-      expect(mockTypeOrmRepository.find).toHaveBeenCalled();
+
       expect(result).toEqual([]);
     });
 
     it('should handle database errors during find', async () => {
-      
-      const error = new Error('Database query failed');
-      mockTypeOrmRepository.find.mockRejectedValue(error);
-  
-      await expect(repository.findAll()).rejects.toThrow('Database query failed');
+      mockTypeOrmRepository.find.mockRejectedValue(new Error('Query failed'));
+
+      await expect(repository.findAll()).rejects.toThrow('Query failed');
+    });
+  });
+
+  describe('findById', () => {
+    it('should return user when found', async () => {
+      mockTypeOrmRepository.findOneBy.mockResolvedValue(mockUser);
+
+      const result = await repository.findById(1);
+
+      expect(mockTypeOrmRepository.findOneBy).toHaveBeenCalledWith({ id: 1 });
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should return null when user does not exist', async () => {
+      mockTypeOrmRepository.findOneBy.mockResolvedValue(null);
+
+      const result = await repository.findById(99);
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('update', () => {
+    it('should update user and return updated entity', async () => {
+      const updatedUser = { ...mockUser, name: 'New Name' };
+      mockTypeOrmRepository.update.mockResolvedValue({} as any);
+      mockTypeOrmRepository.findOneBy.mockResolvedValue(updatedUser);
+
+      const result = await repository.update(1, { name: 'New Name' });
+
+      expect(mockTypeOrmRepository.update).toHaveBeenCalledWith(1, { name: 'New Name' });
+      expect(result).toEqual(updatedUser);
+    });
+
+    it('should return null when user does not exist after update', async () => {
+      mockTypeOrmRepository.update.mockResolvedValue({} as any);
+      mockTypeOrmRepository.findOneBy.mockResolvedValue(null);
+
+      const result = await repository.update(99, { name: 'Ghost' });
+
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('delete', () => {
+    it('should call delete with correct id', async () => {
+      mockTypeOrmRepository.delete.mockResolvedValue({} as any);
+
+      await repository.delete(1);
+
+      expect(mockTypeOrmRepository.delete).toHaveBeenCalledWith(1);
+    });
+
+    it('should handle database errors during delete', async () => {
+      mockTypeOrmRepository.delete.mockRejectedValue(new Error('DB error'));
+
+      await expect(repository.delete(1)).rejects.toThrow('DB error');
     });
   });
 });

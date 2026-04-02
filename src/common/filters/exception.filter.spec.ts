@@ -57,6 +57,7 @@ describe('AllExceptionsFilter', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.BAD_REQUEST);
     expect(mockResponse.json).toHaveBeenCalledWith({
       statusCode: HttpStatus.BAD_REQUEST,
+      message: 'Test error',
       timestamp: mockTimestamp,
       path: '/test-url',
     });
@@ -74,6 +75,7 @@ describe('AllExceptionsFilter', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.INTERNAL_SERVER_ERROR);
     expect(mockResponse.json).toHaveBeenCalledWith({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: 'Internal server error',
       timestamp: mockTimestamp,
       path: '/test-url',
     });
@@ -90,6 +92,7 @@ describe('AllExceptionsFilter', () => {
     expect(mockResponse.status).toHaveBeenCalledWith(HttpStatus.NOT_FOUND);
     expect(mockResponse.json).toHaveBeenCalledWith({
       statusCode: HttpStatus.NOT_FOUND,
+      message: 'Not found',
       timestamp: mockTimestamp,
       path: '/test-url',
     });

@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { NotFoundException } from '@nestjs/common';
 import { UsersController } from './users.controller';
 import { UsersService } from '../domain/users.service';
 import { CreateUserDto } from './dtos/create-users.dto';
@@ -25,6 +26,9 @@ describe('UsersController', () => {
     mockUsersService = {
       create: jest.fn(),
       findAll: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
       welcomeNewUser: jest.fn(),
     } as any;
 
@@ -104,6 +108,56 @@ describe('UsersController', () => {
       mockUsersService.findAll.mockRejectedValue(error);
   
       await expect(controller.findAll()).rejects.toThrow('Service error');
+    });
+  });
+
+  describe('findOne', () => {
+    it('should return user by id', async () => {
+      mockUsersService.findById.mockResolvedValue(mockUser);
+
+      const result = await controller.findOne(1);
+
+      expect(mockUsersService.findById).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should propagate NotFoundException from service', async () => {
+      mockUsersService.findById.mockRejectedValue(new NotFoundException('Not found'));
+
+      await expect(controller.findOne(99)).rejects.toThrow('Not found');
+    });
+  });
+
+  describe('update', () => {
+    it('should update and return user', async () => {
+      const updated = { ...mockUser, name: 'New Name' };
+      mockUsersService.update.mockResolvedValue(updated);
+
+      const result = await controller.update(1, { name: 'New Name' });
+
+      expect(mockUsersService.update).toHaveBeenCalledWith(1, { name: 'New Name' });
+      expect(result).toEqual(updated);
+    });
+
+    it('should propagate NotFoundException from service', async () => {
+      mockUsersService.update.mockRejectedValue(new NotFoundException('Not found'));
+
+      await expect(controller.update(99, { name: 'Ghost' })).rejects.toThrow('Not found');
+    });
+  });
+
+  describe('delete', () => {
+    it('should delete user successfully', async () => {
+      mockUsersService.delete.mockResolvedValue(undefined);
+
+      await expect(controller.delete(1)).resolves.toBeUndefined();
+      expect(mockUsersService.delete).toHaveBeenCalledWith(1);
+    });
+
+    it('should propagate NotFoundException from service', async () => {
+      mockUsersService.delete.mockRejectedValue(new NotFoundException('Not found'));
+
+      await expect(controller.delete(99)).rejects.toThrow('Not found');
     });
   });
 });

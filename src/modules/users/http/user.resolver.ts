@@ -1,5 +1,5 @@
 /* istanbul ignore file */
-import { Args, Mutation, Query, Resolver } from "@nestjs/graphql";
+import { Args, Int, Mutation, Query, Resolver } from "@nestjs/graphql";
 import { CreateUserDto, UserOutput } from "./dtos/create-users.dto";
 import { UsersService } from "../domain/users.service";
 
@@ -10,13 +10,16 @@ export class UserResolver {
 
     @Query(() => [UserOutput])
     findAll(): Promise<UserOutput[]> {
-        console.info('Called: ', this.findAll.name)
         return this.usersService.findAll()
+    }
+
+    @Query(() => UserOutput, { nullable: true })
+    findUser(@Args('id', { type: () => Int }) id: number): Promise<UserOutput | null> {
+        return this.usersService.findById(id)
     }
 
     @Mutation(() => UserOutput)
     create(@Args('data') args: CreateUserDto): Promise<UserOutput> {
-        console.info(args)
         return this.usersService.create(args)
     }
 

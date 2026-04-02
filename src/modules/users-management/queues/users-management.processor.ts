@@ -29,7 +29,6 @@ export class UsersManagementProcessor {
     @Process('user.email.send')
     async sendEmail({ data }: Job<UserCreatedEvent>) {
         this.loggerService.info(`Called method: ${this.sendEmail.name}()`)
-        const createdUser = await this.userModel.create(data)
-        this.loggerService.info(`USER SEND EMAIL: ${JSON.stringify(createdUser)}`)
+        this.loggerService.info(`SENDING WELCOME EMAIL TO: ${data.email}`)
     }
 }

@@ -16,6 +16,7 @@ describe('UserResolver', () => {
   let mockUsersService: jest.Mocked<UsersService>;
 
   const mockUser = {
+    id: 1,
     name: 'Test User',
     email: 'test@example.com',
   };
@@ -24,6 +25,9 @@ describe('UserResolver', () => {
     mockUsersService = {
       create: jest.fn(),
       findAll: jest.fn(),
+      findById: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
       welcomeNewUser: jest.fn(),
     } as any;
 
@@ -59,61 +63,47 @@ describe('UserResolver', () => {
     expect(resolver).toBeInstanceOf(UserResolver);
   });
 
-  it('should have correct constructor dependencies', () => {
-    expect(resolver).toBeDefined();
-    expect((resolver as any).usersService).toBe(mockUsersService);
-    
-    expect(UserResolver).toBeDefined();
-    expect(typeof UserResolver).toBe('function');
-  });
-
   describe('findAll', () => {
-    it('should log correct function name in findAll', async () => {
-      
-      mockUsersService.findAll.mockResolvedValue([]);
-      const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-      await resolver.findAll();
-      expect(consoleSpy).toHaveBeenCalledWith('Called: ', 'findAll');
-      expect(consoleSpy).toHaveBeenCalledTimes(1);
+    it('should call usersService.findAll and return results', async () => {
+      mockUsersService.findAll.mockResolvedValue([mockUser]);
 
-      consoleSpy.mockRestore();
-    });
+      const result = await resolver.findAll();
 
-    it('should call usersService.findAll exactly once', async () => {
-      
-      mockUsersService.findAll.mockResolvedValue([]);
-      jest.spyOn(console, 'info').mockImplementation();
-  
-      await resolver.findAll();
-      
       expect(mockUsersService.findAll).toHaveBeenCalledTimes(1);
-      expect(mockUsersService.findAll).toHaveBeenCalledWith();
+      expect(result).toEqual([mockUser]);
     });
 
     it('should return empty array when no users exist', async () => {
-      
       mockUsersService.findAll.mockResolvedValue([]);
-      const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-  
-      const result = await resolver.findAll();
-      
-      expect(consoleSpy).toHaveBeenCalledWith('Called: ', 'findAll');
-      expect(mockUsersService.findAll).toHaveBeenCalled();
-      expect(result).toEqual([]);
 
-      consoleSpy.mockRestore();
+      const result = await resolver.findAll();
+
+      expect(result).toEqual([]);
     });
 
     it('should handle service errors', async () => {
-      
-      const error = new Error('Service error');
-      mockUsersService.findAll.mockRejectedValue(error);
-      const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-  
-      await expect(resolver.findAll()).rejects.toThrow('Service error');
-      expect(consoleSpy).toHaveBeenCalledWith('Called: ', 'findAll');
+      mockUsersService.findAll.mockRejectedValue(new Error('Service error'));
 
-      consoleSpy.mockRestore();
+      await expect(resolver.findAll()).rejects.toThrow('Service error');
+    });
+  });
+
+  describe('findUser', () => {
+    it('should return user by id', async () => {
+      mockUsersService.findById.mockResolvedValue(mockUser);
+
+      const result = await resolver.findUser(1);
+
+      expect(mockUsersService.findById).toHaveBeenCalledWith(1);
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should return null when user does not exist', async () => {
+      mockUsersService.findById.mockResolvedValue(null);
+
+      const result = await resolver.findUser(99);
+
+      expect(result).toBeNull();
     });
   });
 
@@ -123,40 +113,27 @@ describe('UserResolver', () => {
       email: 'test@example.com',
     };
 
-    it('should log createUserDto object in create method', async () => {
-      
-      mockUsersService.create.mockResolvedValue(mockUser);
-      const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
-  
-      await resolver.create(createUserDto);
-
-      expect(consoleSpy).toHaveBeenCalledWith(createUserDto);
-      expect(consoleSpy).toHaveBeenCalledTimes(1);
-
-      consoleSpy.mockRestore();
-    });
-
     it('should call usersService.create with correct arguments', async () => {
-      
       mockUsersService.create.mockResolvedValue(mockUser);
-      jest.spyOn(console, 'info').mockImplementation();
 
       await resolver.create(createUserDto);
-      
+
       expect(mockUsersService.create).toHaveBeenCalledTimes(1);
       expect(mockUsersService.create).toHaveBeenCalledWith(createUserDto);
     });
 
+    it('should return created user', async () => {
+      mockUsersService.create.mockResolvedValue(mockUser);
+
+      const result = await resolver.create(createUserDto);
+
+      expect(result).toEqual(mockUser);
+    });
+
     it('should handle service errors', async () => {
-      
-      const error = new Error('Service error');
-      mockUsersService.create.mockRejectedValue(error);
-      const consoleSpy = jest.spyOn(console, 'info').mockImplementation();
+      mockUsersService.create.mockRejectedValue(new Error('Service error'));
 
       await expect(resolver.create(createUserDto)).rejects.toThrow('Service error');
-      expect(consoleSpy).toHaveBeenCalledWith(createUserDto);
-
-      consoleSpy.mockRestore();
     });
   });
 });

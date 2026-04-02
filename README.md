@@ -1,268 +1,297 @@
 # Monolithic Architecture with NestJS
 
-<p align="center">
-  A comprehensive <strong>Modular Monolithic Architecture</strong> built with <a href="http://nestjs.com/" target="_blank">NestJS</a>, featuring microservices patterns, modern tooling, and enterprise-grade testing.
-</p>
+A **Modular Monolithic Architecture** built with [NestJS](http://nestjs.com/), featuring Domain-Driven Design patterns, dual REST + GraphQL APIs, event-driven background processing, and a three-tier test suite.
 
-## 🏗️ Architecture Overview
+---
 
-This project demonstrates a **Modular Monolithic Architecture** using NestJS, implementing Domain-Driven Design (DDD) principles with:
+## Architecture Overview
 
-- **Modular Structure**: Each domain (Users, Credit Engine) is isolated with clear boundaries
-- **Repository Pattern**: Abstracted data access with multiple implementations (TypeORM, In-Memory)
-- **Event-Driven Architecture**: Async communication between modules using Bull queues
-- **GraphQL + REST**: Dual API approach for different client needs
-- **Enterprise Testing**: 100% test coverage with unit, integration, and e2e tests
-
-## 🚀 Features
-
-### Core Modules
-- **Users Module**: Complete user management with CRUD operations
-- **Credit Engine Module**: Business logic for credit processing
-- **Users Management Module**: Background job processing with Bull queues
-
-### API Layers
-- **REST API**: Traditional HTTP endpoints for standard operations
-- **GraphQL API**: Flexible query interface with Apollo Server
-- **WebSocket**: Real-time communication capabilities
-
-### Infrastructure
-- **Multi-Database Support**: PostgreSQL (TypeORM), MongoDB (Prisma)
-- **Caching**: Redis integration for performance optimization
-- **File Storage**: AWS S3 integration for file uploads
-- **Logging**: Structured logging with Winston
-- **Monitoring**: Health checks and error tracking
-
-### Development Experience
-- **Hot Reload**: Fast development with Nodemon
-- **Type Safety**: Full TypeScript coverage
-- **Code Quality**: ESLint + Prettier configuration
-- **Testing**: Jest with comprehensive test suites
-- **CI/CD**: GitHub Actions with automated testing and security audits
-
-## 📦 Installation
-
-### Prerequisites
-- Node.js 20+
-- Docker & Docker Compose
-- Yarn or npm
-
-### Quick Start
-
-```bash
-# Clone the repository
-git clone https://github.com/luizcurti/monolithic-architecture.git
-cd monolithic-architecture
-
-# Install dependencies
-yarn install
-
-# Setup environment
-cp .env.example .env
-
-# Start infrastructure services
-docker compose up -d
-
-# Run database migrations
-yarn db:generate
-yarn db:migrate-mongo
-
-# Start the application
-yarn start:dev
-```
-
-## 🔧 Development
-
-### Available Scripts
-
-```bash
-# Development
-yarn start:dev          # Start with hot reload
-yarn credit:start:dev    # Start credit service separately
-
-# Building
-yarn build              # Build for production
-yarn start:prod         # Run production build
-
-# Testing
-yarn test               # Run unit tests
-yarn test:watch         # Run tests in watch mode
-yarn test:cov           # Generate coverage report (100%)
-yarn test:e2e           # Run end-to-end tests
-yarn test:e2e:cov       # E2E tests with coverage
-
-# Code Quality
-yarn lint               # Run ESLint with auto-fix
-yarn lint:fix           # Alias for lint
-yarn format             # Format code with Prettier
-
-# Database
-yarn db:generate        # Generate Prisma client
-yarn db:migrate-mongo   # Run MongoDB migrations
-yarn db:format          # Format Prisma schema
-```
-
-### Project Structure
+Each domain module is self-contained with its own controller, service, repository interface, and data-access implementations. Cross-module communication goes through NestJS EventEmitter or Bull queues — never direct imports.
 
 ```
 src/
-├── common/                 # Shared utilities and services
-│   ├── constants/         # Database configurations
-│   ├── events/           # Domain events
-│   ├── filters/          # Global exception filters
-│   ├── loggers/          # Winston logging service
-│   └── s3/               # AWS S3 file upload service
-├── config/               # Configuration modules
-│   ├── database.config.ts
-│   ├── redis.config.ts
-│   └── s3.config.ts
-├── ioC/                  # Inversion of Control
-│   └── app.module.ts     # Root application module
-└── modules/              # Feature modules
-    ├── users/            # User management
-    │   ├── domain/       # Business logic
-    │   │   ├── entities/
-    │   │   ├── models/
-    │   │   ├── repositories/
-    │   │   └── users.service.ts
-    │   └── http/         # API layer
-    │       ├── dtos/
+├── common/
+│   ├── constants/       # TypeORM datasource factory
+│   ├── events/          # Domain events (UserCreatedEvent)
+│   ├── filters/         # Global HTTP exception filter
+│   ├── loggers/         # Winston logger (TRANSIENT scope)
+│   └── s3/              # AWS S3 upload service
+├── config/              # database / redis / s3 configs (ConfigModule)
+├── ioC/
+│   └── app.module.ts    # Root module
+└── modules/
+    ├── users/
+    │   ├── domain/
+    │   │   ├── models/           # User TypeORM entity + GraphQL ObjectType
+    │   │   ├── repositories/     # IUserRepository interface + provider
+    │   │   │   └── implementations/
+    │   │   │       ├── users.typeorm.repository.ts
+    │   │   │       └── users.in-memory.repository.ts
+    │   │   └── users.service.ts  # Business logic, events
+    │   └── http/
+    │       ├── dtos/             # CreateUserDto / UpdateUserDto
     │       ├── users.controller.ts
     │       └── user.resolver.ts
-    ├── credit-engine/    # Credit processing
-    └── users-management/ # Background jobs
+    ├── credit-engine/            # Credit processing placeholder
+    └── users-management/
+        ├── domain/               # Mongoose schema + repository
+        └── queues/               # Bull processor (sendEmail job)
 ```
 
-## 🐳 Docker Support
+---
 
-### Single Application Container
+## Prerequisites
+
+| Tool | Version |
+|------|---------|
+| Node.js | 20+ |
+| npm / yarn | any |
+| Docker & Docker Compose | 24+ |
+
+---
+
+## Environment Setup
+
+Copy the example and fill in the values:
 
 ```bash
-# Build the Docker image
-docker build -t monolithic-architecture .
-
-# Run the container
-docker run -p 3000:3000 monolithic-architecture
+cp .env.example .env   # or create .env manually from the table below
 ```
 
-### Full Stack with Docker Compose
+| Variable | Example | Description |
+|----------|---------|-------------|
+| `DATABASE_DATASOURCE` | `typeorm` | Active datasource (`typeorm` or `in-memory`) |
+| `TYPEORM_TYPE` | `postgres` | TypeORM driver |
+| `TYPEORM_HOST` | `0.0.0.0` | PostgreSQL host |
+| `TYPEORM_PORT` | `5432` | PostgreSQL port |
+| `TYPEORM_USERNAME` | `qso_user` | DB user |
+| `TYPEORM_PASSWORD` | `qso_password` | DB password |
+| `TYPEORM_DATABASE` | `qso_example` | DB name |
+| `MONGODB_URL` | `mongodb://127.0.0.1:27017/users_management` | MongoDB connection |
+| `REDIS_HOST` | `127.0.0.1` | Redis host |
+| `REDIS_PORT` | `6379` | Redis port |
+
+---
+
+## Running with Docker
 
 ```bash
-# Start all services (app + databases)
+# Start PostgreSQL and Redis
 docker compose up -d
 
-# View logs
-docker compose logs -f
+# Install dependencies
+npm install
 
-# Stop services
-docker compose down
+# Start the application (hot-reload)
+npm run start:dev
 ```
 
-**Services included:**
-- **Application**: NestJS app on port 3000
-- **PostgreSQL**: Database on port 5432
-- **MongoDB**: Document store on port 27017
-- **Redis**: Cache/message broker on port 6379
+The API is available at `http://localhost:3000`.
 
-## 🧪 Testing Strategy
+---
 
-### Test Coverage: 100%
-
-- **Unit Tests**: 108 tests covering all business logic
-- **Integration Tests**: Repository and service layer testing
-- **E2E Tests**: Full API testing with real database
-- **Coverage**: 100% lines, branches, and statements
-
-### Test Files
-```
-test/
-├── app.e2e-spec.ts        # End-to-end API tests
-├── jest-e2e.json          # E2E Jest configuration
-└── jest-coverage.json     # Coverage configuration
-
-src/**/*.spec.ts           # Unit test files
-```
-
-### Running Tests
+## Available Scripts
 
 ```bash
-# Quick test run
-yarn test
+# Development
+npm run start:dev          # NestJS with hot-reload (Nodemon)
+npm run start:prod         # Run compiled build
 
-# With coverage report
-yarn test:cov
+# Build
+npm run build
 
-# End-to-end tests
-yarn test:e2e
+# Code quality
+npm run lint               # ESLint + auto-fix
+npm run format             # Prettier
 
-# Watch mode for development
-yarn test:watch
+# Tests
+npm run test               # Unit tests (Jest)
+npm run test:watch         # Unit tests in watch mode
+npm run test:cov           # Unit tests with coverage report
+npm run test:e2e           # E2E tests against SQLite in-memory
+npm run test:e2e:docker    # E2E tests against real PostgreSQL (requires Docker)
+
+# Database helpers (Prisma / MongoDB)
+npm run db:generate        # Generate Prisma client
+npm run db:migrate-mongo   # Run MongoDB migrations
+npm run db:format          # Format Prisma schema
 ```
 
-## 🌐 API Documentation
+---
 
-### REST Endpoints
+## REST API
 
-- `GET /users` - List all users
-- `POST /users` - Create new user
-- `GET /credit-engine/health` - Health check
+All endpoints are prefixed with `/v1`.
 
-### GraphQL Playground
+### Users — `GET /v1/users`
 
-Visit `http://localhost:3000/graphql` for interactive GraphQL playground.
+Returns the list of all users.
 
-**Available Queries:**
+**Response 200**
+```json
+[{ "id": 1, "name": "John Doe", "email": "john@example.com" }]
+```
+
+### Users — `POST /v1/users`
+
+Creates a new user.
+
+**Body**
+```json
+{ "name": "John Doe", "email": "john@example.com" }
+```
+
+**Response 201** — created user object with generated `id`.
+
+### Users — `GET /v1/users/:id`
+
+Returns a single user by numeric ID.
+
+**Response 200** — user object  
+**Response 404** — user not found
+
+### Users — `PATCH /v1/users/:id`
+
+Partially updates a user. Both `name` and `email` are optional.
+
+**Body**
+```json
+{ "name": "Jane Doe" }
+```
+
+**Response 200** — updated user object  
+**Response 404** — user not found
+
+### Users — `DELETE /v1/users/:id`
+
+Deletes a user.
+
+**Response 204** — no content  
+**Response 404** — user not found
+
+### Credit Engine — `GET /v1/credit`
+
+Health-check endpoint for the credit engine module.
+
+**Response 200** — `Hello Credit Engine`
+
+---
+
+## GraphQL API
+
+Playground available at `http://localhost:3000/graphql`.
+
 ```graphql
+# List all users
 query {
-  findAllUsers {
+  findAll {
+    id
     name
     email
   }
 }
 
+# Find user by ID (returns null if not found — nullable field)
+query {
+  findUser(id: 1) {
+    name
+    email
+  }
+}
+
+# Create user
 mutation {
-  createUser(data: { name: "John", email: "john@example.com" }) {
+  create(data: { name: "John Doe", email: "john@example.com" }) {
+    id
     name
     email
   }
 }
 ```
 
-## 🔒 Security
+---
 
-- **Input Validation**: Class-validator for DTO validation
-- **Security Audits**: Automated vulnerability scanning
-- **Environment Variables**: Secure configuration management
-- **Error Handling**: Proper error responses without information leakage
+## Error Responses
 
-## 🚀 CI/CD Pipeline
+All errors follow the same shape:
 
-GitHub Actions workflow includes:
+```json
+{
+  "statusCode": 404,
+  "message": "User with ID 99 not found",
+  "timestamp": "2024-01-01T00:00:00.000Z",
+  "path": "/v1/users/99"
+}
+```
 
-1. **Code Quality**: ESLint and TypeScript compilation
-2. **Testing**: Unit tests with 100% coverage requirement
-3. **Security**: Vulnerability auditing with yarn audit
-4. **Docker**: Container build verification
-5. **E2E Testing**: Full application testing with real databases
+---
 
-## 📊 Performance
+## Testing
 
-- **Hot Reload**: Fast development iteration
-- **Caching**: Redis for improved response times
-- **Connection Pooling**: Optimized database connections
-- **Async Processing**: Background jobs with Bull queues
+### Unit Tests
 
-## 🤝 Contributing
+```bash
+npm run test
+```
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Covers all services, controllers, resolvers, repositories, filters, and events using Jest mocks and an in-memory repository. Zero external dependencies required.
 
-### Development Guidelines
+### E2E — SQLite (no Docker)
 
-- Maintain 100% test coverage
-- Follow existing code patterns
-- Update documentation for new features
-- Ensure all CI checks pass
+```bash
+npm run test:e2e
+```
+
+Spins up the full NestJS application with an SQLite in-memory database. Runs 26 tests covering complete CRUD, GraphQL queries/mutations, validation errors, and error-response shape — no external services required.
+
+### E2E — PostgreSQL (Docker)
+
+```bash
+# Prerequisite: containers must be running
+docker compose up -d
+
+npm run test:e2e:docker
+```
+
+Runs 27 tests against the real PostgreSQL container. Each test starts with a clean `user` table (via `DELETE FROM "user"`). Verifies true persistence, auto-generated IDs, and data integrity across sequential requests.
+
+| Suite | Config file | DB | Tests |
+|-------|-------------|-----|-------|
+| Unit | `package.json` (default Jest) | none | 132 |
+| E2E SQLite | `test/jest-e2e.json` | SQLite `:memory:` | 26 |
+| E2E Docker | `test/jest-e2e-docker.json` | PostgreSQL 11 | 27 |
+
+---
+
+## Event-Driven Flow
+
+When a user is created via REST or GraphQL:
+
+1. `UsersService.create()` emits `UserCreatedEvent`
+2. `UsersService.welcomeNewUser()` handler receives the event
+3. A Bull job is added to the `users` queue
+4. `UsersManagementProcessor.sendEmail()` processes the job asynchronously
+
+---
+
+## CI/CD
+
+GitHub Actions (`.github/workflows/ci.yml`) runs on every push:
+
+1. Install dependencies
+2. ESLint
+3. TypeScript compilation check
+4. Unit tests
+5. `npm audit` security scan
+
+---
+
+## Docker Services
+
+```yaml
+# docker-compose.yml
+postgres:  # qso     — port 5432  (PostgreSQL 11.8)
+redis:     # qso_redis — port 6379  (Redis alpine)
+```
+
+The application container is defined in `docker-compose.yml` but commented out; run `npm run start:dev` locally for development.

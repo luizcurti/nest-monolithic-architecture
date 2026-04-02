@@ -74,39 +74,25 @@ describe('Application (e2e)', () => {
   });
 
   afterAll(async () => {
-    // Allow time for all async operations to complete
     await new Promise(resolve => setTimeout(resolve, 500));
   });
 
-  describe('Users API (REST)', () => {
-    it('GET /v1/users - should return empty array initially', () => {
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Users — Full REST CRUD
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  describe('Users API — GET /v1/users', () => {
+    it('returns empty array when no users exist', () => {
       return request(app.getHttpServer())
         .get('/v1/users')
         .expect(200)
         .expect([]);
     });
 
-    it('POST /v1/users - should create a new user', () => {
-      return request(app.getHttpServer())
-        .post('/v1/users')
-        .send({
-          name: 'John Doe',
-          email: 'john.doe@example.com'
-        })
-        .expect(201)
-        .expect((res) => {
-          expect(res.body).toHaveProperty('name', 'John Doe');
-          expect(res.body).toHaveProperty('email', 'john.doe@example.com');
-        });
-    });
-
-    it('GET /v1/users - should return created user', async () => {
+    it('returns list with created users', async () => {
       await request(app.getHttpServer())
         .post('/v1/users')
-        .send({
-          name: 'Jane Smith',
-          email: 'jane.smith@example.com'
-        });
+        .send({ name: 'Jane Smith', email: 'jane.smith@example.com' });
 
       return request(app.getHttpServer())
         .get('/v1/users')
@@ -114,31 +100,185 @@ describe('Application (e2e)', () => {
         .expect((res) => {
           expect(Array.isArray(res.body)).toBe(true);
           expect(res.body.length).toBeGreaterThan(0);
+          expect(res.body[0]).toHaveProperty('id');
           expect(res.body[0]).toHaveProperty('name');
           expect(res.body[0]).toHaveProperty('email');
         });
     });
+  });
 
-    it('POST /v1/users - should validate required fields', () => {
+  describe('Users API — POST /v1/users', () => {
+    it('creates a new user and returns 201 with the resource', () => {
+      return request(app.getHttpServer())
+        .post('/v1/users')
+        .send({ name: 'John Doe', email: 'john.doe@example.com' })
+        .expect(201)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('id');
+          expect(res.body).toHaveProperty('name', 'John Doe');
+          expect(res.body).toHaveProperty('email', 'john.doe@example.com');
+        });
+    });
+
+    it('returns 400 when required fields are missing', () => {
       return request(app.getHttpServer())
         .post('/v1/users')
         .send({})
         .expect(400);
     });
 
-    it('POST /v1/users - should validate email format', () => {
+    it('returns 400 for invalid email', () => {
       return request(app.getHttpServer())
         .post('/v1/users')
-        .send({
-          name: 'Invalid Email User',
-          email: 'invalid-email'
-        })
+        .send({ name: 'Bad Email', email: 'not-an-email' })
+        .expect(400);
+    });
+
+    it('returns 400 when name is missing', () => {
+      return request(app.getHttpServer())
+        .post('/v1/users')
+        .send({ email: 'only@email.com' })
+        .expect(400);
+    });
+
+    it('returns 400 when email is missing', () => {
+      return request(app.getHttpServer())
+        .post('/v1/users')
+        .send({ name: 'Only Name' })
         .expect(400);
     });
   });
 
-  describe('Credit Engine API (REST)', () => {
-    it('GET /v1/credit - should return credit engine message', () => {
+  describe('Users API — GET /v1/users/:id', () => {
+    it('returns the user by ID', async () => {
+      const create = await request(app.getHttpServer())
+        .post('/v1/users')
+        .send({ name: 'Find Me', email: 'findme@example.com' });
+
+      const id = create.body.id;
+
+      return request(app.getHttpServer())
+        .get(`/v1/users/${id}`)
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('id', id);
+          expect(res.body).toHaveProperty('name', 'Find Me');
+          expect(res.body).toHaveProperty('email', 'findme@example.com');
+        });
+    });
+
+    it('returns 404 when user does not exist', () => {
+      return request(app.getHttpServer())
+        .get('/v1/users/99999')
+        .expect(404);
+    });
+
+    it('returns 400 for non-numeric ID', () => {
+      return request(app.getHttpServer())
+        .get('/v1/users/abc')
+        .expect(400);
+    });
+  });
+
+  describe('Users API — PATCH /v1/users/:id', () => {
+    it('updates the user name', async () => {
+      const create = await request(app.getHttpServer())
+        .post('/v1/users')
+        .send({ name: 'Old Name', email: 'update@example.com' });
+
+      const id = create.body.id;
+
+      return request(app.getHttpServer())
+        .patch(`/v1/users/${id}`)
+        .send({ name: 'New Name' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('id', id);
+          expect(res.body).toHaveProperty('name', 'New Name');
+          expect(res.body).toHaveProperty('email', 'update@example.com');
+        });
+    });
+
+    it('updates the user email', async () => {
+      const create = await request(app.getHttpServer())
+        .post('/v1/users')
+        .send({ name: 'Email Update', email: 'old@example.com' });
+
+      const id = create.body.id;
+
+      return request(app.getHttpServer())
+        .patch(`/v1/users/${id}`)
+        .send({ email: 'new@example.com' })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('email', 'new@example.com');
+        });
+    });
+
+    it('returns 400 for invalid email on update', async () => {
+      const create = await request(app.getHttpServer())
+        .post('/v1/users')
+        .send({ name: 'Validate Update', email: 'valid@example.com' });
+
+      const id = create.body.id;
+
+      return request(app.getHttpServer())
+        .patch(`/v1/users/${id}`)
+        .send({ email: 'not-valid' })
+        .expect(400);
+    });
+
+    it('returns 404 when user does not exist', () => {
+      return request(app.getHttpServer())
+        .patch('/v1/users/99999')
+        .send({ name: 'Ghost' })
+        .expect(404);
+    });
+
+    it('returns 400 for non-numeric ID', () => {
+      return request(app.getHttpServer())
+        .patch('/v1/users/abc')
+        .send({ name: 'X' })
+        .expect(400);
+    });
+  });
+
+  describe('Users API — DELETE /v1/users/:id', () => {
+    it('deletes the user and returns 204', async () => {
+      const create = await request(app.getHttpServer())
+        .post('/v1/users')
+        .send({ name: 'Delete Me', email: 'delete@example.com' });
+
+      const id = create.body.id;
+
+      await request(app.getHttpServer())
+        .delete(`/v1/users/${id}`)
+        .expect(204);
+
+      return request(app.getHttpServer())
+        .get(`/v1/users/${id}`)
+        .expect(404);
+    });
+
+    it('returns 404 when trying to delete non-existent user', () => {
+      return request(app.getHttpServer())
+        .delete('/v1/users/99999')
+        .expect(404);
+    });
+
+    it('returns 400 for non-numeric ID', () => {
+      return request(app.getHttpServer())
+        .delete('/v1/users/abc')
+        .expect(400);
+    });
+  });
+
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Credit Engine
+  // ─────────────────────────────────────────────────────────────────────────────
+
+  describe('Credit Engine API — GET /v1/credit', () => {
+    it('returns the credit engine message', () => {
       return request(app.getHttpServer())
         .get('/v1/credit')
         .expect(200)
@@ -146,8 +286,12 @@ describe('Application (e2e)', () => {
     });
   });
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // GraphQL
+  // ─────────────────────────────────────────────────────────────────────────────
+
   describe('GraphQL API', () => {
-    it('should execute GraphQL health check query', () => {
+    it('health check — schema introspection', () => {
       const query = `
         query {
           __schema {
@@ -168,7 +312,7 @@ describe('Application (e2e)', () => {
         });
     });
 
-    it('should create user via GraphQL mutation', () => {
+    it('mutation create — creates user via GraphQL', () => {
       const mutation = `
         mutation {
           create(data: {
@@ -192,57 +336,96 @@ describe('Application (e2e)', () => {
         });
     });
 
-    it('should query users via GraphQL', async () => {
-      const mutation = `
-        mutation {
-          create(data: {
-            name: "Query User"
-            email: "query@example.com"
-          }) {
-            name
-            email
-          }
-        }
-      `;
-
+    it('query findAll — lists users via GraphQL', async () => {
       await request(app.getHttpServer())
         .post('/graphql')
-        .send({ query: mutation });
-        
-      const query = `
-        query {
-          findAll {
-            name
-            email
-          }
-        }
-      `;
+        .send({
+          query: `
+            mutation {
+              create(data: { name: "Query User", email: "query@example.com" }) {
+                name
+                email
+              }
+            }
+          `,
+        });
 
       return request(app.getHttpServer())
         .post('/graphql')
-        .send({ query })
+        .send({
+          query: `
+            query {
+              findAll {
+                name
+                email
+              }
+            }
+          `,
+        })
         .expect(200)
         .expect((res) => {
           expect(res.body.data).toBeDefined();
-          expect(res.body.data.findAll).toBeDefined();
           expect(Array.isArray(res.body.data.findAll)).toBe(true);
+          expect(res.body.data.findAll.length).toBeGreaterThan(0);
+        });
+    });
+
+    it('query findUser — finds user by ID via GraphQL', async () => {
+      const createRes = await request(app.getHttpServer())
+        .post('/v1/users')
+        .send({ name: 'GQL Find', email: 'gqlfind@example.com' });
+
+      const id = createRes.body.id;
+
+      return request(app.getHttpServer())
+        .post('/graphql')
+        .send({
+          query: `
+            query {
+              findUser(id: ${id}) {
+                name
+                email
+              }
+            }
+          `,
+        })
+        .expect(200)
+        .expect((res) => {
+          expect(res.body.data.findUser).toHaveProperty('name', 'GQL Find');
+          expect(res.body.data.findUser).toHaveProperty('email', 'gqlfind@example.com');
         });
     });
   });
 
+  // ─────────────────────────────────────────────────────────────────────────────
+  // Error Handling
+  // ─────────────────────────────────────────────────────────────────────────────
+
   describe('Error Handling', () => {
-    it('should handle 404 for non-existent routes', () => {
+    it('returns 404 for non-existent routes', () => {
       return request(app.getHttpServer())
         .get('/v1/non-existent')
         .expect(404);
     });
 
-    it('should handle invalid JSON in POST requests', () => {
+    it('returns 400 for invalid JSON in POST', () => {
       return request(app.getHttpServer())
         .post('/v1/users')
         .set('Content-Type', 'application/json')
         .send('invalid json')
         .expect(400);
+    });
+
+    it('error response includes statusCode, message, timestamp and path', () => {
+      return request(app.getHttpServer())
+        .get('/v1/users/99999')
+        .expect(404)
+        .expect((res) => {
+          expect(res.body).toHaveProperty('statusCode', 404);
+          expect(res.body).toHaveProperty('message');
+          expect(res.body).toHaveProperty('timestamp');
+          expect(res.body).toHaveProperty('path');
+        });
     });
   });
 });
